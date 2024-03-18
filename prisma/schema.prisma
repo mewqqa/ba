@@ -11,24 +11,57 @@ datasource db {
 }
 
 model User {
-  id       Int     @id @default(autoincrement())
-  username String  @db.VarChar(30)
-  password String  @db.VarChar(72)
+  user_id  Int       @id @default(autoincrement())
+  username String    @unique @db.VarChar(30)
+  password String    @db.VarChar(72)
   email    String?
-  todo     Todo[]
+  phone    String    @db.VarChar(10)
+  address  String    @db.VarChar(100)
+  role     String    @db.VarChar(20)
+  Booking  Booking[]
+
+  @@map("users")
 }
 
-model Todo {
-  id      Int      @id @default(autoincrement())
-  title   String   @db.VarChar(150)
-  status  Status   @default(pending)
-  duedate DateTime @db.Date
-  user_id Int
-  user    User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+model Payment {
+  payment_id     Int    @id @default(autoincrement())
+  payment_method String @db.VarChar(50)
+  payment_amount String @db.VarChar(50)
+  payment_status Status @default(pending)
+  img            String
+  order_number   String @db.VarChar(20)
+
+  @@map("payment")
+}
+
+model Booking {
+  booking_id    Int      @id @default(autoincrement())
+  username      String   @unique @db.VarChar(30)
+  booking_date  DateTime @db.Date
+  wedding_venue String   @db.VarChar(100)
+  status        Status   @default(pending)
+  themes        Themes   @relation(fields: [themesID], references: [themes_id], onDelete: Cascade, onUpdate: Cascade)
+  themesID      Int      @map("themes_id")
+  users         User     @relation(fields: [userID], references: [user_id], onDelete: Cascade, onUpdate: Cascade)
+  userID        Int      @map("user_id")
+
+  @@map("booking")
+}
+
+model Themes {
+  themes_id   Int       @id @default(autoincrement())
+  themes_name String    @db.VarChar(30)
+  detail      String    @db.VarChar(100)
+  price       String    @db.VarChar(20)
+  themes_img  String
+  Booking     Booking[]
+
+  @@map("theme")
 }
 
 enum Status {
   pending
   doing
   done
+  cancel
 }

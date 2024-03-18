@@ -1,8 +1,9 @@
 const bcrypt = require("bcryptjs");
+const jwt = require('jsonwebtoken')
 const db = require("../models/db");
 
 module.exports.register = async (req, res, next) => {
-  const { username, password, confirmPassword, email } = req.body;
+  const { username, password, confirmPassword, email, phone, address , role} = req.body;
   try {
     if (!(username && password && confirmPassword)) {
       return next(new Error("Fullfill all inputs"));
@@ -16,15 +17,46 @@ module.exports.register = async (req, res, next) => {
       username,
       password: hashedPassword,
       email,
+      phone,
+      address,
+      role: 'customer'
     };
-    const rs = await db.user.create({ data })
-    console.log(rs);
+    const rs = await db.user.create({data: data})
+    console.log(rs)
+    console.log(data)
 
     res.json({ msg: "Register successful" });
   } catch (err) {
     next(err);
   }
 };
-module.exports.login = (req, res, next) => {
-  res.send("in Login...");
+module.exports.login = async (req, res, next) => {
+  const {username, password} = req.body
+
+  try {
+
+  if ( !( username.trim() && password.trim())) {
+  throw new Error('username or password must not blank')
+  }
+  
+  const user = await db.user.findFirstOrThrow({ where : { username }})
+
+ const pwOk = await bcrypt.compare(password,user.password )
+ if(!pwOk) {
+  throw new Error('invalid login')
+ }
+
+const payload = { id: user.user_id}
+const token = jwt.sign(payload, process.env.JWT_SECERT, {
+  expiresIn: '30d'
+})
+console.log(token) 
+  res.json({token : token})
+}catch(err) {
+  next(err)
+}
 };
+
+exports.getme = (req,res,next) => {
+  res.json(req.user)
+}
